@@ -249,9 +249,6 @@ function renderReportsTable(incidents) {
   }).join('');
 }
 
-// ============================================================
-//  BADGE HELPERS
-// ============================================================
 function statusBadge(s) {
   const map = {
     'Pending':      'badge-pending',
@@ -273,9 +270,6 @@ function priorityBadge(p) {
   return `<span class="badge ${map[p]||'badge-medium'}">${p}</span>`;
 }
 
-// ============================================================
-//  VIEW INCIDENT DETAIL
-// ============================================================
 async function viewIncident(id) {
   try {
     const res  = await fetch(`${CONFIG?.API_BASE_URL || 'http://localhost:3000/api'}/incidents/${id}`);
@@ -323,9 +317,6 @@ async function viewIncident(id) {
   }
 }
 
-// ============================================================
-//  INIT SUBMIT MAP (with click-to-pin, NBSC restricted)
-// ============================================================
 function initSubmitMap() {
   if (submitMap) return;
 
@@ -343,7 +334,6 @@ function initSubmitMap() {
     maxZoom: 19
   }).addTo(submitMap);
 
-  // Draw NBSC border on submit map too
   L.polygon(NBSC_POLYGON, {
     color:       '#c9a227',
     weight:      2,
@@ -353,7 +343,6 @@ function initSubmitMap() {
     dashArray:   '6,4'
   }).addTo(submitMap);
 
-  // Instruction tooltip
   const info = L.control({ position: 'topright' });
   info.onAdd = () => {
     const div = L.DomUtil.create('div');
@@ -368,21 +357,17 @@ function initSubmitMap() {
   };
   info.addTo(submitMap);
 
-  // CLICK TO PIN — restricted to NBSC bounds
   submitMap.on('click', function(e) {
     const { lat, lng } = e.latlng;
 
-    // Check if inside NBSC bounds
     if (!NBSC_BOUNDS.contains([lat, lng])) {
       showOutOfBoundsWarning();
       return;
     }
 
-    // Set hidden inputs
     document.getElementById('latitude').value  = lat.toFixed(8);
     document.getElementById('longitude').value = lng.toFixed(8);
 
-    // Update location display
     const locDisplay = document.getElementById('locationDisplay');
     const locText    = document.getElementById('locationText');
     locDisplay.style.border     = '1px solid #22c55e';
@@ -390,7 +375,6 @@ function initSubmitMap() {
     locDisplay.style.background = 'rgba(34,197,94,.05)';
     locText.textContent = `📍 ${lat.toFixed(6)}°N, ${lng.toFixed(6)}°E`;
 
-    // Place/move marker
     if (submitMarker) {
       submitMarker.setLatLng([lat, lng]);
     } else {
@@ -399,7 +383,6 @@ function initSubmitMap() {
         draggable: true
       }).addTo(submitMap);
 
-      // Allow dragging — update coords on drag
       submitMarker.on('dragend', function(ev) {
         const pos = ev.target.getLatLng();
 
@@ -422,9 +405,6 @@ function initSubmitMap() {
   });
 }
 
-// ============================================================
-//  OUT OF BOUNDS WARNING
-// ============================================================
 function showOutOfBoundsWarning() {
   const existing = document.getElementById('nbsc-warning');
   if (existing) return;
@@ -448,15 +428,10 @@ function showOutOfBoundsWarning() {
   setTimeout(() => warn.remove(), 3500);
 }
 
-// ============================================================
-//  GET CURRENT LOCATION (GPS — snapped to NBSC if outside)
-// ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Init main map
   initMainMap();
   loadIncidents();
 
-  // Init submit map when submit section is shown
   const submitLink = document.getElementById('submitNavLink');
   if (submitLink) {
     submitLink.addEventListener('click', () => {
@@ -467,7 +442,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // GPS button
   const gpsBtn = document.getElementById('getCurrentLocation');
   if (gpsBtn) {
     gpsBtn.addEventListener('click', () => {
@@ -490,7 +464,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
           let { latitude: lat, longitude: lng } = pos.coords;
 
-          // If outside NBSC, snap to campus center
           if (!NBSC_BOUNDS.contains([lat, lng])) {
             lat = 8.3595;
             lng = 124.8675;
@@ -544,13 +517,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Refresh map button
   const refreshBtn = document.getElementById('refreshMap');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', loadIncidents);
   }
 
-  // Filter change listeners
   ['statusFilter', 'priorityFilter'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', applyFilters);
